@@ -1,133 +1,132 @@
 #include <iostream>
-
 #include <vector>
-
-#include <unordered_map>
-
-#include <string>
-
+#include <deque>
 #include <fstream>
 
-#include <stdio.h>
+using deck = std::deque<int>;
 
-#include <string.h>
+const int number_of_decks = 8;
+const int number_of_card_in_deck = 9;
 
-#include <sstream>
+const int minimal_value_card = 6;
+const int maximal_value_card = 14;
 
-#include <iostream>
-#include <regex>
+std::vector<int> v;
+std::vector<deck> cards_(number_of_decks);
+std::vector<int> Open_cards;
 
 
 
+void init() {
+    std::ifstream in;
+    in.open("/home/maxim/CLionProjects/untitled1/input.txt");
 
-
-class CourseTable {
-public:
-    int dp_start(size_t fifth_course) {
-        std::vector<int> dp(100);
-
-        for (auto &i: dp) {
-            i = -1;
+    for (int i = 0; i < number_of_decks; ++i) {
+        for (int j = 0; j < number_of_card_in_deck; ++j) {
+            int a;
+            in >> a;
+            cards_[i].push_back(a);
+            v.push_back(a);
         }
+    }
 
-        for (int i = 0; i < max_priority_ - 1; ++i) {
-            for (auto&[key, value] : table_[i]) {
-                if (table_[i].empty()) {
-                    dp[key] = 0;
+    for (int i = 0; i < cards_.size(); ++i) {
+
+    }
+
+    in.close();
+//    for (int i = 6; i <= 14; i++) {
+//        std::cout << i << " : " << std::count(v.begin(), v.end(), i) << std::endl;
+//    }
+}
+
+void print_matrix(std::vector<deck>& cards){
+    for (auto i : cards) {
+        for(auto j : i){
+            std::cout << j << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << "---------------------------" << std::endl;
+}
+
+int counter = 0;
+
+int random_moves(std::vector<deck>& cards, std::vector<int>& offset_){
+    for (int i = 0; i < cards.size(); ++i) {
+        int a = cards[i].back();
+        for (int j = 0; j < cards.size(); ++j) {
+            if (i != j) {
+                int b = cards[j][cards.size() - 1 - offset_[j]];
+                if (b - a == 1){
+                    cards[j].push_back(a);
+                    cards[i].pop_back();
+                    offset_[j]++;
+                    std::cout << "change from deck:" << a << "from " << i << "to "  << j << std::endl;
+                    print_matrix(cards);
+                    if (counter == 10)
+                        abort();
+                    counter++;
+                    random_moves(cards, offset_);
                 }
             }
         }
-
-        return lazy_dfs(fifth_course, dp, max_priority_ - 1);
     }
+}
 
-    int lazy_dfs(size_t key, std::vector<int>& dp, int level){
-        if (dp[key] != -1){
-            return dp[key] + 1;
-        }
+int FirstOpen(std::vector<deck>& cards) {
+    // должна выдавать первую открытую карту
+}
 
-        int sum = 0;
-        auto children = table_[level][key];
-        for (auto& child : children)
+int LastOpen(std::vector<deck>& cards) {
+    // должна выдавать последнюю открытую карту
+}
+
+void swap(std::vector<int>& cards2, std::vector<int>& cards, int num_cards){
+    std::deque<int> temp;
+    for (int i = 0; i < num_cards; ++i) {
+        temp.push_back(cards.back());
+        cards.pop_back();
+    }
+    for (int i = 0; i < num_cards; ++i) {
+        cards2.push_back(temp.front());
+        temp.pop_front();
+    }
+}
+
+bool brute_force(std::vector<deck>& position) {
+    for (size_t j = 0; j < 100000; j++)
+    {
+        std::sort (position.begin (), position.end ());
+        size_t empty_heaps = 0;
+        for (size_t i = 0; i < number_of_decks - 1; i++)
         {
-            sum += lazy_dfs(child, dp, levels[child]);
-        }
+            if (position[i].empty()) {
+                empty_heaps++;
+                continue;
+            }
 
-        return sum + 1;
-    }
-
-private:
-    using Dependence = std::vector<size_t>;
-    using Level = std::unordered_map<size_t, Dependence>;
-    using Table = std::vector<Level>;
-
-    size_t max_priority_;
-    Table table_;
-    std::unordered_map<size_t, std::string> names;
-    std::unordered_map<size_t, size_t> levels;
-
-    friend std::ifstream& operator>>(std::ifstream& stream, CourseTable& table);
-};
-
-std::ifstream& operator>>(std::ifstream& stream, CourseTable& table)
-{
-    std::string cur_line;
-    std::getline(stream, cur_line);
-    sscanf(cur_line.c_str(), "%zd", &table.max_priority_);
-
-    table.table_.resize(table.max_priority_);
-    if (0 == table.max_priority_) {
-        return stream;
-    }
-
-
-    size_t number_of_course = 0;
-
-    auto str = new char[50];
-    auto dependence = new char[50];
-    for (size_t current_level = 0; current_level < table.max_priority_; current_level++) {
-        std::getline(stream, cur_line);
-
-        int read_bytes = 0;
-        int bytes = 0;
-        while (sscanf(cur_line.c_str() + read_bytes, " (%zd) %[^[] [%[^]]],%n", &number_of_course, str, dependence, &bytes) == 3) {
-            table.names[number_of_course] = std::string(str);
-            table.levels[number_of_course] = current_level;
-            read_bytes += bytes;
-
-
-            size_t read_dependence = 0;
-            size_t bytes_to_add = 0;
-            while (sscanf(dependence + bytes_to_add, "%zd,%n", &read_dependence, &bytes) == 1) {
-                bytes_to_add += bytes;
-                table.table_[current_level][number_of_course].push_back(read_dependence);
+            if (position[i + 1].empty () || FirstOpen(position[i]) == LastOpen(position[i + 1]) - 1)
+            {
+                swap(position[i + 1], position[i]);
             }
         }
+
+        if (position[number_of_card_in_deck - 1].empty () && empty_heaps == number_of_card_in_deck - 1)
+        {
+            return true;
+        }
     }
 
-    delete[] str;
-    delete[] dependence;
-    return stream;
+    return false;
 }
 
 
-int main (const int argc, const char** argv) {
-
-    const int number_of_courses3 = 2; // количество кусов 3 уровня
-    std::vector<size_t> course3(number_of_courses3); // номера кусов 3 уровня
-
-    std::ifstream file_read;
-    file_read.open(/*argv[1]*/"/home/maxim/CLionProjects/untitled1/cmake-build-debug/courses.csv");
-
-    CourseTable table;
-
-    file_read >> table;
-
-
-    std::cout << table.dp_start(10) + table.dp_start(course3[0]) + table.dp_start(course3[1]);
-    
-
-    if (argc != 4) {
-        std::cout << "На вход должно даваться 4 аргумента\n";
-    }
+signed main(){
+    init();
+    print_matrix(cards_);
+//    print_matrix(cards);
+    random_moves(cards_);
+//    solve();
+    return 0;
 }
